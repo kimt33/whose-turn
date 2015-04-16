@@ -55,3 +55,8 @@ docs/_build/
 
 # PyBuilder
 target/
+
+#readme stuff
+README.log
+README.md
+README.aux
