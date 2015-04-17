@@ -11,7 +11,7 @@ diego = Person('Diego Berrocal', 'undergrad', [datetime.date(2015,4,1)], isaway=
 cris = Person('Cristina Gonzalez', 'phd', [datetime.date(2015,4,8)], isaway=True)
 derrick = Person('Derrick Yang', 'masters', [datetime.date(2015,4,15)])
 pawel = Person('Pawel Tecmer', 'postdoc', [])
-paul = Person('Paul Ayers', 'professor', [])
+paul = Person('Paul Ayers', 'professor', [], isaway=True)
 farnaz = Person('Farnaz Heidar Zadeh', 'phd', [])
 matt = Person('Matt Chan', 'phd', [])
 david = Person('David Kim', 'masters', [])
@@ -34,7 +34,10 @@ groupmeetings.add_title(datetime.date(2015,4,8), 'Electronic spectra of ThO and 
 groupmeetings.add_title(datetime.date(2015,4,15), 'Flat plane condition and spin reactivity indicator for atoms and ions')
 groupmeetings.set_future_one(datetime.date(2015,4,22), pawel)
 groupmeetings.set_future_one(datetime.date(2015,4,29), david)
-groupmeetings.set_future_random(4, datetime.date(2015,4,22))
+groupmeetings.set_future_one(datetime.date(2015,5,6), matt)
+groupmeetings.set_future_one(datetime.date(2015,5,13), chunying)
+groupmeetings.set_future_one(datetime.date(2015,5,20), farnaz)
+groupmeetings.set_future_one(datetime.date(2015,5,27), ramon)
 groupmeetings.update_future()
 for i in groupmeetings.past_presentations:
     print i
