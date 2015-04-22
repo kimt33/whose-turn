@@ -359,13 +359,13 @@ class GroupMeetings:
                         title = presentation['title']
                         if title == '':
                             title = 'N/A'
-                        f.write('@'+str(date)+'\n')
+                        f.write('@GDS!:'+str(date)+'\n')
                         f.write('This is an automatic reminder that there is a group meeting on {date} where:\n    Presenter: {presenter}\n    Title: {title}\n    Chair: {chair}\n'.format(\
                                 presenter=presentation['presenter'], chair=presentation['chair'], date=presentation['date'], title=title))
                         if presentation['title'] == '' or presentation['file'] == '':
                             f.write('When you can, could the presenter send David')
                             if presentation['title'] == '':
-                                f.write(' the title of the presentation')
+                                f.write(' and Pawel the title of the presentation')
                                 if presentation['file'] == '':
                                     f.write(' and')
                                 else:
