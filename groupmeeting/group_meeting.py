@@ -18,6 +18,7 @@ class Person:
         self._dateschair = []
         self._futurechair = []
         self._isaway = isaway
+        self._email = ''
 
     def __eq__(self, other):
         """ returns true if other is the name of person else false
@@ -52,6 +53,9 @@ class Person:
     @property
     def is_away(self):
         return self._isaway
+    @property
+    def email(self):
+        return self._email
 
     def add_date(self, newdate):
         """add a new date that person presented
@@ -123,6 +127,8 @@ class Person:
         self.remove_futurechair(date)
         self.add_datechair(date)
 
+    def add_email(self, email):
+        self._email = email
 
 class GroupMeetings:
     def __init__(self, persons):
@@ -359,6 +365,10 @@ class GroupMeetings:
                         title = presentation['title']
                         if title == '':
                             title = 'N/A'
+                        emails = [self.find_person(i).email for i in [presentation[j] for j in ['presenter','chair']]]
+                        if numdays == 1:
+                            emails.append('ayers-lab@googlegroups.com')
+                        f.write(', '.join(emails)+'\n')
                         f.write('@GDS!:'+str(date)+'\n')
                         f.write('This is an automatic reminder that there is a group meeting on {date} where:\n    Presenter: {presenter}\n    Title: {title}\n    Chair: {chair}\n'.format(\
                                 presenter=presentation['presenter'], chair=presentation['chair'], date=presentation['date'], title=title))
