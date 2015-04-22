@@ -344,3 +344,34 @@ class GroupMeetings:
     def remove_future(self, date):
         del self._future[date]
 
+    def compose_emails(self, flag='reminder'):
+        """writes emails in gmail format (for gmail delay send) to various people
+
+        Args:
+            flag: str that is one of 'reminder', 'announcement'
+        """
+        assert flag in ['reminder','announcement'], 'given flag is not supported'
+        if flag == 'reminder':
+            with open('email.txt','w') as f:
+                for presentation in self.future_presentations:
+                    for numdays in [7,3,1]:
+                        date = presentation['date'] + datetime.timedelta(days=-numdays)
+                        title = presentation['title']
+                        if title == '':
+                            title = 'N/A'
+                        f.write('@'+str(date)+'\n')
+                        f.write('This is an automatic reminder that there is a group meeting on {date} where:\n    Presenter: {presenter}\n    Title: {title}\n    Chair: {chair}\n'.format(\
+                                presenter=presentation['presenter'], chair=presentation['chair'], date=presentation['date'], title=title))
+                        if presentation['title'] == '' or presentation['file'] == '':
+                            f.write('When you can, could the presenter send David')
+                            if presentation['title'] == '':
+                                f.write(' the title of the presentation')
+                                if presentation['file'] == '':
+                                    f.write(' and')
+                                else:
+                                    f.write('?\n')
+                            if presentation['file'] == '':
+                                f.write(' a copy of the presentation?\n')
+                        f.write('\nThanks,\nDavid\n\n')
+
+
