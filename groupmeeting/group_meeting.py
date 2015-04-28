@@ -365,9 +365,11 @@ class GroupMeetings:
                         title = presentation['title']
                         if title == '':
                             title = 'N/A'
-                        emails = [self.find_person(i).email for i in [presentation[j] for j in ['presenter','chair']]]
-                        if numdays == 1:
+                        emails = [self.find_person(i).email for i in ['David Kim', 'Cristina Gonzalez', 'Ramon Miranda']]
+                        emails += [self.find_person(i).email for i in [presentation[j] for j in ['presenter','chair']]]
+                        if numdays in [3,1]:
                             emails.append('ayers-lab@googlegroups.com')
+                        f.write('Group Presentation: '+presentation['presenter'].split()[0]+'\n')
                         f.write(', '.join(emails)+'\n')
                         f.write('@GDS!:'+str(date)+'\n')
                         f.write('This is an automatic reminder that there is a group meeting on {date} where:\n    Presenter: {presenter}\n    Title: {title}\n    Chair: {chair}\n'.format(\
