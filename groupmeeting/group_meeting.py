@@ -140,6 +140,22 @@ class GroupMeetings:
             self.find_person(name).add_date_to_chair(date)
         else:
             print 'no one is presenting on the date given (' +str(date)+')'
+    def remove_chair(self, date):
+        """ removes chair for the given date
+
+        """
+        # TODO:check if name is right
+        # TODO:check if date is right
+        if date in self._past_presentations:
+            name = self._past_presentations[date]['chair']
+            self.find_person(name).remove_date_chaired(date)
+            self._past_presentations[date]['chair'] = ''
+        elif date in self._future_presentations:
+            name = self._future_presentations[date]['chair']
+            self.find_person(name).remove_date_to_chair(date)
+            self._future_presentations[date]['chair'] = ''
+        else:
+            print 'no one is presenting on the date given (' +str(date)+')'
 
     def add_past_presentation(self, date, name, title='', fileinp='', chair=''):
         """ adds to past presentations
@@ -296,7 +312,12 @@ class GroupMeetings:
             self.remove_future(date)
 
     def remove_future(self, date):
-        del self._future_presentations[date]
+        if date in self._future_presentations:
+            presenter_name = self._future_presentations[date]['presenter']
+            self.find_person(presenter_name).remove_date_to_present(date)
+            chair_name = self._future_presentations[date]['chair']
+            self.find_person(chair_name).remove_date_to_chair(date)
+            del self._future_presentations[date]
 
     def compose_emails(self):
         """writes emails in gmail format (for gmail delay send) to various people
