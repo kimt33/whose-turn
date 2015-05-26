@@ -189,7 +189,7 @@ class GroupMeetings:
         assert weight_type in ['presentation','chair'],'given weight_type is unknown'
         weeks_since = []
         for person in self._presenters:
-            if not person.is_away:
+            if not person.is_away(date):
                 # find closest date from past
                 if len(person.dates_presented) > 0 and weight_type == 'presentation':
                     closest_date = abs(date-max(person.dates_presented))
@@ -292,7 +292,7 @@ class GroupMeetings:
         """
         for i in range(n):
             date = refdate + datetime.timedelta(days=7*i)
-            self.set_future_random_one(date)
+            self.add_future_random_one(date)
 
     def update_future(self):
         today = datetime.date.today()

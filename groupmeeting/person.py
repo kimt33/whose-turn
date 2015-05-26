@@ -9,9 +9,9 @@ class Person:
         _dates_to_present: list of datetime.date instances that describe when said person will present in the future
         _dates_chaired: list of datetime.date instances that describe when said person chaired
         _dates_to_chair: list of datetime.date instances that describe when said person will chair in the future
-        _is_away: bool that describes when said person is away
+        _dates_away: list of tuples that describe when (from and (optional)to) the person is away
     """
-    def __init__(self, name, position, dates_presented=[], dates_chaired=[], is_away=False):
+    def __init__(self, name, position, dates_presented=[], dates_chaired=[], dates_away=[]):
         """creates person
 
         Args:
@@ -19,7 +19,7 @@ class Person:
             position: str that describes the person's status within group (choose b/w 'undergrad', 'masters', 'phd', 'postdoc', 'professor')
             dates_presented: list of datetime.date instances that describe when said person presented
             dates_chaired: list of datetime.date instances that describe when said person chaired
-            is_away: bool that describes when said person is away
+            dates_away: list of tuples that describe when (from and (optional)to) the person is away
         """
         self._name = name
         self._position = position
@@ -27,7 +27,7 @@ class Person:
         self._dates_to_present = []
         self._dates_chaired = dates_chaired
         self._dates_to_chair = []
-        self._is_away = is_away
+        self._dates_away = dates_away
         self._email = ''
 
     def __eq__(self, other):
@@ -53,7 +53,7 @@ class Person:
         return self._dates_presented
     @property
     def dates_to_present(self):
-            return self._dates_to_present
+        return self._dates_to_present
     @property
     def dates_chaired(self):
         return self._dates_chaired
@@ -61,11 +61,20 @@ class Person:
     def dates_to_chair(self):
         return self._dates_to_chair
     @property
-    def is_away(self):
-        return self._is_away
-    @property
     def email(self):
         return self._email
+    @property
+    def dates_away(self):
+        return self._dates_away
+
+    def is_away(self, date=datetime.date.today()):
+        for date_range in self.dates_away:
+            if len(date_range)==1 and date_range[0] <= date:
+                return True
+            if len(date_range)==2 and date_range[0] <= date <= date_range[1]:
+                return True
+        else:
+            return False
 
     def add_date_presented(self, newdate):
         """add a new date that person presented
