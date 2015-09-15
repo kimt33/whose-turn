@@ -11,7 +11,7 @@ p4
 (lp5
 sS'_name'
 p6
-S'Michael Rocher'
+S'Michael Richer'
 p7
 sS'_dates_to_chair'
 p8

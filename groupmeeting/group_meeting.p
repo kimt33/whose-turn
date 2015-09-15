@@ -953,7 +953,7 @@ g12
 sg131
 g400
 sg133
-S'Michael Rocher'
+S'Michael Richer'
 p409
 sg135
 (lp410

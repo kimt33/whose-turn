@@ -22,7 +22,7 @@ groupmeetings.add_past_presentation(date(2015,9,9), 'Paul Ayers', title='Outline
 groupmeetings.add_past_presentation(date(2015,8,26), 'Corinne Duperrouzel')
 groupmeetings.add_past_presentation(date(2015,8,27), 'Nicole Dumont')
 groupmeetings.add_person(Person('Kumru Dikmenli', 'masters'))
-groupmeetings.add_person(Person('Michael Rocher', 'masters'))
+groupmeetings.add_person(Person('Michael Richer', 'masters'))
 groupmeetings.add_person(Person('Caitlin Lanssens', 'visiting'))
 groupmeetings.add_future_one(date(2015,9,16), name_presenter='Cristina Gonzalez')
 groupmeetings.add_future_random_one(date(2015,9,16), date_type='chair')
