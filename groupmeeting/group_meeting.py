@@ -168,7 +168,7 @@ class GroupMeetings:
             chair: str for name of person chairing presentation
         """
         # NOTE: not sure about this one (can there be more than one presentations per day?)
-        if date < datetime.date.today() and date not in self._past_presentations:
+        if date < datetime.date.today():
             self._past_presentations[date] = {'presenter':name, 'title':title, 'file':fileinp, 'chair':chair}
             for person in self._presenters:
                 if person == name:
