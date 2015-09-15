@@ -4,26 +4,26 @@ p0
 (dp1
 S'_email'
 p2
-S'dumontns@mcmaster.ca'
+S''
 p3
 sS'_dates_presented'
 p4
 (lp5
+sS'_name'
+p6
+S'Caitlin Lanssens'
+p7
+sS'_dates_to_chair'
+p8
+(lp9
 cdatetime
 date
-p6
-(S'\x07\xdf\x08\x1b'
-p7
-tp8
-Rp9
-asS'_name'
 p10
-S'Nicole Dumont'
+(S'\x07\xdf\t\x10'
 p11
-sS'_dates_to_chair'
-p12
-(lp13
-sS'_dates_chaired'
+tp12
+Rp13
+asS'_dates_chaired'
 p14
 (lp15
 sS'_dates_to_present'
@@ -34,6 +34,6 @@ p18
 (lp19
 sS'_position'
 p20
-S'undergrad'
+S'visiting'
 p21
 sb.

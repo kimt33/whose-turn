@@ -71,10 +71,70 @@ class Person:
         for date_range in self.dates_away:
             if len(date_range)==1 and date_range[0] <= date:
                 return True
-            if len(date_range)==2 and date_range[0] <= date <= date_range[1]:
+            elif len(date_range)==2 and date_range[0] <= date <= date_range[1]:
                 return True
         else:
             return False
+
+    def add_date_away(self, newdate):
+        """add a date range to dates away
+
+        **Arguments**
+        from_date
+            date instance
+        to_date
+            date instance
+
+        with some pecularities:
+          if newdate matches the date_range with only one date (with unknown end date)
+             then you can either do nothing, or provide the end date, or crash
+          if newdate overlaps with the date_range
+             then the largest range is taken
+          if newdate does not in any way overlap with other dates
+             then you add the new date range
+          else crash
+        """
+        for date_range in self.dates_away:
+            if len(date_range)==1:
+                if (len(newdate)==2 and
+                    date_range[0] == newdate[0]):
+                    self._dates_away = [i if i!=date_range
+                                        else tuple(newdate)
+                                        for i in self.dates_away]
+                    break
+                elif len(newdate)==1 and date_range[0] == newdate[0]:
+                    break
+                else:
+                    assert False, 'the newdate,{0}, must have the same start\
+                    date as the existing from_date,{1}'.format(newdate, date_range)
+            elif len(date_range)==2:
+                if (date_range[0] <= newdate[0] <= date_range[1] and
+                    date_range[1] < newdate[1]):
+                    newdate = (date_range[0], newdate[1])
+                    self._dates_away = [i if i!=date_range
+                                        else newdate
+                                        for i in self.dates_away]
+                    break
+                elif (newdate[0] < date_range[0] and
+                      date_range[0] <= newdate[1] <= date_range[1]):
+                    newdate = (newdate[0], date_range[1])
+                    self._dates_away = [i if i!=date_range
+                                        else newdate
+                                        for i in self.dates_away]
+                    break
+                elif (newdate[0] < date_range[0] and
+                      date_range[1] < newdate[1]):
+                    self._dates_away = [i if i!=date_range
+                                        else tuple(newdate)
+                                        for i in self.dates_away]
+                    break
+                elif (date_range[0] < newdate[0] and
+                      newdate[1] < date_range[1]):
+                    assert False, 'Given newdate{0} is already included in range, {1}'\
+                        .format(newdate, date_range)
+        else:
+            self._dates_away.append(tuple(newdate))
+
 
     def add_date_presented(self, newdate):
         """add a new date that person presented

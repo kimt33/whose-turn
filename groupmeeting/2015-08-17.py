@@ -8,4 +8,4 @@ thisweek = date(2015,8,19)
 for person in groupmeetings._presenters:
     print person.__dict__.keys()
 groupmeetings.print_nice()
-groupmeetings.compose_emails()
+#groupmeetings.compose_emails()

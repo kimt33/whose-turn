@@ -37,14 +37,8 @@ p19
 sS'_dates_away'
 p21
 (lp22
-(lp23
-g6
-(S'\x07\xdf\x06\x04'
-p24
-tp25
-Rp26
-aasS'_position'
-p27
+sS'_position'
+p23
 S'masters'
-p28
+p24
 sb.

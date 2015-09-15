@@ -236,16 +236,22 @@ class GroupMeetings:
                     # try again
                     self.add_future_random_one(date, date_type=date_type)
                     return None  # kill recursion here
+                if self._future_presentations[date]['presenter'] != '':
+                    old_presenter = self._future_presentations[date]['presenter']
+                    self.find_person(old_presenter).remove_date_to_present(date)
                 self._future_presentations[date]['presenter'] = person.name
             else:
                 self._future_presentations[date] = {'presenter':person.name, 'title':'', 'file':'', 'chair':''}
         elif date_type=='chair':
             if date in self._future_presentations:
-                # if person is already chairing on this date
+                # if person is already presenting on this date
                 if person.name == self._future_presentations[date]['presenter']:
                     # try again
                     self.add_future_random_one(date, date_type=date_type)
                     return None  # kill recursion here
+                if self._future_presentations[date]['chair'] != '':
+                    old_chair = self._future_presentations[date]['chair']
+                    self.find_person(old_chair).remove_date_to_chair(date)
                 self._future_presentations[date]['chair'] = person.name
             else:
                 self._future_presentations[date] = {'presenter':'', 'title':'', 'file':'', 'chair':person.name}
@@ -271,12 +277,16 @@ class GroupMeetings:
             self._future_presentations[date] = {'presenter':name_presenter, 'title':title, 'file':fileinp, 'chair':name_chair}
         else:
             if name_presenter!='':
+                old_presenter = self._future_presentations[date]['presenter']
+                self.find_person(old_presenter).remove_date_to_present(date)
                 self._future_presentations[date]['presenter'] = name_presenter
             if title!='':
                 self._future_presentations[date]['title'] = title
             if fileinp!='':
                 self._future_presentations[date]['file'] = fileinp
             if name_chair!='':
+                old_chair = self._future_presentations[date]['chair']
+                self.find_person(old_chair).remove_date_to_present(date)
                 self._future_presentations[date]['chair'] = name_chair
         if name_presenter != '':
             self.find_person(name_presenter).add_date_to_present(date)

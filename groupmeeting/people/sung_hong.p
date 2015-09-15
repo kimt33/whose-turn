@@ -37,8 +37,14 @@ p19
 sS'_dates_away'
 p21
 (lp22
-sS'_position'
+(g6
+(S'\x07\xdf\t\x01'
 p23
+tp24
+Rp25
+tp26
+asS'_position'
+p27
 S'undergrad'
-p24
+p28
 sb.
