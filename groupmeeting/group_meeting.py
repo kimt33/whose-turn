@@ -189,7 +189,8 @@ class GroupMeetings:
         assert weight_type in ['presentation','chair'],'given weight_type is unknown'
         weeks_since = []
         for person in self._presenters:
-            if not person.is_away(date):
+            if (not person.is_away(date) and
+                person.position != 'undergrad'):
                 # find closest date from past
                 if len(person.dates_presented) > 0 and weight_type == 'presentation':
                     closest_date = abs(date-max(person.dates_presented))
@@ -272,7 +273,6 @@ class GroupMeetings:
         """
         assert name_presenter == '' or name_presenter in self.presenters
         assert name_chair == '' or name_chair in self.presenters
-
         if date not in self._future_presentations:
             self._future_presentations[date] = {'presenter':name_presenter, 'title':title, 'file':fileinp, 'chair':name_chair}
         else:
