@@ -1,336 +1,511 @@
-from person import *
+from person import Person
+from presentation import Presentation, PresentationStorage
+import datetime
 import copy
 import random
 
-class GroupMeetings:
+class GroupMeetings(object):
     """
-    Attributes:
-        _presenters: list of Person instances
-        _past_presentations: dictionary of date to {presenter, title, file, chair}
-        _future_presentations: dictionary of date to {presenter, title, file, chair}
+    Attributes
+    ----------
+    _presenters: list of Person instances
+        All the people that presents will be represented by a Person instance
+    _past_presentations : list of Presentation instances
+        Each past presentation is represented by a Presentation instance
+    _future_presentations : list of Presentation instances
+        Each future presentation is represented by a Presentation instance
     """
     def __init__(self, persons):
         """ adds all the people involved in the group meetings
 
-        Args:
-            persons: list of Person instances
+        Parameters
+        ----------
+        persons : list of Person instances
         """
-        self._presenters = persons
-        # TODO:check if no contradicting information (more than one person present on the same day)
-        self._past_presentations = {date:{'presenter':person.name, 'title':'', 'file':'', 'chair':''} for person in persons for date in person.dates_presented}
-        self._future_presentations = {date:{'presenter':person.name, 'title':'', 'file':'', 'chair':''} for person in persons for date in person.dates_to_present}
+        self._presenters = list(persons)
+        self._past_presentations = PresentationStorage([Presentation(date, presenter=person)
+                                                        for person in persons
+                                                        for date in person.dates_presented])
+        self._future_presentations = PresentationStorage([Presentation(date, presenter=person)
+                                                          for person in persons
+                                                          for date in person.dates_to_present])
         for person in persons:
             for date in person.dates_chaired:
-                if date in self._past_presentations:
-                    self._past_presentations[date]['chair'] = person.name
-                else:
-                    raise AssertionError, 'presentation in past does not exist without presenter'
+                matches = self._past_presentations.find_presentations(date=date)
+                assert len(matches)==1, '''Unsupported number of presentations,{0},
+                                        on this date, {1}'''.format(len(matches), date)
+                matches[0].chair = person
             for date in person.dates_to_chair:
-                if date in self._future_presentations:
-                    self._future_presentations[date]['chair'] = person.name
-                else:
-                    self._future_presentations[date] = {'presenter':'', 'title':'', 'file':'', 'chair':person.name}
+                matches = self._future_presentations.find_presentations(date=date)
+                assert len(matches) in [0,1], 'Unsupported number of\
+                presentations,{0}, on this date, {1}'.format(len(matches), date)
+                if len(matches) == 0:
+                    new_presentation = Presentation(date, chair=person)
+                    self._future_presentations.add_presentation(new_presentation)
+                elif len(matches) == 1:
+                    matches[0].chair = person
 
     @property
     def presenters(self):
         return [presenter.name for presenter in self._presenters]
+
     @property
     def past_presentations(self):
-        """returns alternative dictionary of name to {presenter, title, file, chair, date}
+        """ Returns information on the past presentations, ordered by date
 
+        Returns
+        -------
+        past_presentations : list of dictionary
+            __dict__ of each presentation
         """
-        dates = sorted(date for date in self._past_presentations)
-        pretty = [copy.deepcopy(self._past_presentations[date]) for date in dates]
-        for i,date in zip(pretty,dates): # CHECK: is i a reference to self._past?
-            i['date'] = date
-        return pretty
+        ordered_past = self._past_presentations.ordered_date()
+        return [i.__dict__ for i in ordered_past]
+
     @property
     def future_presentations(self):
-        """returns alternative dictionary of name to {presenter, title, file, chair, date}
+        """ Returns information on the future presentations, ordered by date
 
+        Returns
+        -------
+        future_presentations : list of dictionary
+            __dict__ of each presentation
         """
-        dates = sorted(i for i in self._future_presentations)
-        pretty = [copy.deepcopy(self._future_presentations[i]) for i in dates]
-        for i,date in zip(pretty,dates): # CHECK: is i a reference to self._past?
-            i['date'] = date
-        return pretty
+        ordered_future = self._future_presentations.ordered_date()
+        return [i.__dict__ for i in ordered_future]
+
     def print_nice(self, flag='both'):
         """prints the presentations nicely
 
-        Args:
-            flag: str that is one of 'both','past','future' indicating which to print
+        Parameters
+        ----------
+        flag : {'both', 'past', 'future'}
+            controls which presentations to print
         """
         assert flag in ['both','past','future'], 'given flag is not supported'
         # TODO: not sure how to set variable length for aligning
         # maxnamewidth = max(len(name) for name in self.presenters)
-        print "{date:<12}{presenter:<20} {chair:<20} {title}".format(date='date',presenter='presenter',title='title', chair='chair')
+        print "{date:<12}{presenter:<20} {chair:<20} {title}".format(date='date',
+                                                                     presenter='presenter',
+                                                                     chair='chair',
+                                                                     title='title')
         if flag in ['both','past']:
-            for i in self.past_presentations:
-                print "{date:<12}{presenter:<20} {chair:<20} {title}".format(date=str(i['date']),presenter=i['presenter'],title=i['title'], chair=i['chair'])
+            for presentation in self._past_presentations.ordered_date():
+                print presentation
         if flag in ['both','future']:
-            for i in self.future_presentations:
-                print "{date:<12}{presenter:<20} {chair:<20} {title}".format(date=str(i['date']),presenter=i['presenter'],title=i['title'], chair=i['chair'])
+            for presentation in self._future_presentations.ordered_date():
+                print presentation
 
     def find_person(self, name):
-        """returns Person instance with name
+        """ Returns Person instance that corresponds to the name
+
+        Parameters
+        ----------
+        name : str
+            Name of the person you are trying to find
         """
         for person in self._presenters:
-            if person==name:
+            if person == name:
                 return person
+
     def add_person(self, person):
-        """adds person to presenters
+        """ Adds person to presenters
 
-        Args:
-            person: instance of Person
+        Parameters
+        ----------
+        person : Person
+
+        Raises
+        ------
+        AssertionError
+            If person already is added
         """
-        if not self.find_person(person.name):
-            self._presenters.append(person)
-            for date in person.dates_presented:
-                if date not in self._past_presentations:
-                    self._past_presentations[date] = {'presenter':person.name, 'title':'', 'file':'', 'chair':''}
-                elif self._past_presentations[date]['presenter'] != person.name:
-                    raise AssertionError,'presentation already exists on that date'
-            for date in person.dates_chaired:
-                if date in self._past_presentations:
-                    self._past_presentations[date]['chair'] = person.name
-                else:
-                    raise AssertionError,'presentation does not exist without preseneter'
-            for date in person.dates_to_present:
-                if date not in self._future_presentations:
-                    self._future_presentations[date] = {'presenter':person.name, 'title':'', 'file':'', 'chair':''}
-                elif self._future_presentations[date]['presenter'] != person.name:
-                    raise AssertionError,'presentation already exists on that date'
-            for date in person.dates_to_chair:
-                if date in self._future_presentations:
-                    self._future_presentations[date]['chair'] = person.name
-                else:
-                    self._future_presentations[date] = {'presenter':'', 'title':'', 'file':'', 'chair':person.name}
+        assert not self.find_person(person.name)
+        self._presenters.append(person)
+        for date in person.dates_presented:
+            self.add_past_presentation(date=date, presenter=person)
+        for date in person.dates_to_present:
+            self.add_future_presentation(date=date, presenter=person)
+        for date in person.dates_chaired:
+            self.add_chair(date, person)
+        for date in person.dates_to_chair:
+            self.add_chair(date, person)
 
-    def add_title(self, date, title):
-        """ adds title to a presentation
+    def _change_presentation_attribute(self, attribute, value,
+                                       date=None, presenter=None, chair=None, title=''):
+        """ Adds/replaces or removes the attribute from the presentation that
+        matches the given date, presenter, chair, or title
 
-        Args:
-            date: instance of datetime
-            title: str
+        Parameters
+        ----------
+        attribute : str
+            Name of the attribute that is going to be changed
+        value : {datetime.date, Person, str}
+            New value of the attribute
+            Setting the value to the default value (date=None, presenter=None,
+            chair=None, and title='') would remove the attribute from the
+            presentation
+        date : {None, datetime.date}
+        presenter : {None, Person, str}
+        chair : {None, Person, str}
+        title : {'', str}
+
+        Raises
+        ------
+        AssertionError
+            If more than one presentations are found
         """
-        # TODO:check if name is right
-        # TODO:check if date is right
-        if date in self._past_presentations:
-            self._past_presentations[date]['title'] = title
-        elif date in self._future_presentations:
-            self._future_presentations[date]['title'] = title
-        else:
-            print 'no one is presenting on the date given (' +str(date)+')'
+        if isinstance(presenter, str):
+            presenter = self.find_person(presenter)
+        if isinstance(chair, str):
+            chair = self.find_person(chair)
+        matches_past = self._past_presentations.find_presentations(date=date,
+                                                                   presenter=presenter,
+                                                                   chair=chair,
+                                                                   title=title)
+        matches_future = self._future_presentations.find_presentations(date=date,
+                                                                       presenter=presenter,
+                                                                       chair=chair,
+                                                                       title=title)
+        assert len(matches_past)+len(matches_future)<=1, 'Too many\
+        presentations to assign'
+        for presentation in matches_past:
+            setattr(presentation, attribute, value)
+        for presentation in matches_future:
+            setattr(presentation, attribute, value)
 
-    def add_chair(self, date, name):
-        """ adds chair to a presentation of date
+    def replace_date(self, to_date, from_date=None, presenter=None, chair=None, title=''):
+        """ Replaces date of a presentation with attributes presenter,
+        chair or title
 
-        Args:
-            date: instance of datetime
-            name: str
+        Parameters
+        ----------
+        to_date : datetime.date
+        from_date : {None, datetime.date}
+        presenter : {None, Person, str}
+        chair : {None, Person, str}
+        title : {'', str}
         """
-        # TODO:check if name is right
-        # TODO:check if date is right
-        assert self.find_person(name), 'cannot find person with name ('+name+')'
-        if date in self._past_presentations:
-            self._past_presentations[date]['chair'] = name
-            self.find_person(name).add_date_chaired(date)
-        elif date in self._future_presentations:
-            self._future_presentations[date]['chair'] = name
-            self.find_person(name).add_date_to_chair(date)
-        else:
-            print 'no one is presenting on the date given (' +str(date)+')'
-    def remove_chair(self, date):
-        """ removes chair for the given date
+        self._change_presentation_attribute('date', to_date, date=from_date,
+                                            presenter=presenter,
+                                            chair=chair, title=title)
 
+    def add_presenter(self, person, date=None, chair=None, title=''):
+        """ Adds/Replaces presenter of a presentation with attributes date,
+        chair or title
+
+        Parameters
+        ----------
+        person : {str, Person}
+        date : {None, datetime.date}
+        chair : {None, Person, str}
+        title : {'', str}
+
+        Raises
+        ------
+        AssertionError
+            If person cannot be found by the name given
         """
-        # TODO:check if name is right
-        # TODO:check if date is right
-        if date in self._past_presentations:
-            name = self._past_presentations[date]['chair']
-            self.find_person(name).remove_date_chaired(date)
-            self._past_presentations[date]['chair'] = ''
-        elif date in self._future_presentations:
-            name = self._future_presentations[date]['chair']
-            self.find_person(name).remove_date_to_chair(date)
-            self._future_presentations[date]['chair'] = ''
-        else:
-            print 'no one is presenting on the date given (' +str(date)+')'
+        if isinstance(person, str):
+            assert self.find_person(person), 'Cannot find person with name, {0}'.format(name)
+            person = self.find_person(person)
+        self._change_presentation_attribute('presenter', person, date=date,
+                                            chair=chair, title=title)
 
-    def add_past_presentation(self, date, name, title='', fileinp='', chair=''):
-        """ adds to past presentations
+    def remove_presenter(self, date=None, presenter=None, chair=None, title=''):
+        """ Removes presenter of a presentation with attributes date,
+        chair or title
 
-        Args:
-            date: instance of datetime
-            name: str of person's name
-            title: str
-            fileinp: str describing file
-            chair: str for name of person chairing presentation
+        Parameters
+        ----------
+        date : {None, datetime.date}
+        presenter : {None, Person}
+        chair : {None, Person}
+        title : {'', str}
         """
-        # NOTE: not sure about this one (can there be more than one presentations per day?)
-        if date < datetime.date.today():
-            self._past_presentations[date] = {'presenter':name, 'title':title, 'file':fileinp, 'chair':chair}
-            for person in self._presenters:
-                if person == name:
-                    person.add_date_presented(date)
-                if person == chair:
-                    person.add_date_chaired(date)
+        self._change_presentation_attribute('presenter', None, date=date,
+                                            presenter=presenter, chair=chair,
+                                            title=title)
 
-    def get_weights(self, date, weight_type='presentation'):
-        """ gives the weights for date
+    def add_chair(self, person, date=None, presenter=None, title=''):
+        """ Adds/Replaces chair of a presentation with attributes date,
+        chair or title
 
-        Args:
-            date: instance of datetime
-            weight_type: 'presentation' or 'chair', to indicate the weight selection for presentation or chair, respectively
-        Return:
-            weights: weights for each person
-            AssertionError: if given weight_type is not 'presentation' or 'chair'
+        Parameters
+        ----------
+        person : {str, Person}
+        date : {None, datetime.date}
+        presenter : {None, Person}
+        title : {'', str}
+
+        Raises
+        ------
+        AssertionError
+            If person cannot be found by the name given
         """
-        assert weight_type in ['presentation','chair'],'given weight_type is unknown'
+        if isinstance(person, str):
+            assert self.find_person(person), 'Cannot find person with name, {0}'.format(name)
+            person = self.find_person(person)
+        self._change_presentation_attribute('chair', person, date=date,
+                                            presenter=presenter, title=title)
+
+    def remove_chair(self, date=None, chair=None, presenter=None, title=''):
+        """ Removes chair of a presentation with attributes date,
+        chair or title
+
+        Parameters
+        ----------
+        date : {None, datetime.date}
+        chair : {None, Person}
+        presenter : {None, Person}
+        title : {'', str}
+        """
+        self._change_presentation_attribute('chair', None, date=date,
+                                            presenter=presenter, chair=chair,
+                                            title=title)
+
+    def add_title(self, title, date=None, presenter=None, chair=None):
+        """ Adds/Replaces title to a presentation with attributes date,
+        chair or title
+
+        Parameters
+        ----------
+        title : str
+        date : {None, datetime.date}
+        presenter : {None, Person}
+        chair : {None, Person}
+        """
+        self._change_presentation_attribute('title', title, date=date,
+                                            presenter=presenter, chair=chair)
+
+    def remove_title(self, date=None, title='', presenter=None, chair=None):
+        """ Removes title from a presentation with attributes date,
+        chair or title
+
+        Parameters
+        ----------
+        date : {None, datetime.date}
+        title : {'', str}
+        presenter : {None, Person, str}
+        chair : {None, Person, str}
+        """
+        self._change_presentation_attribute('title', '', date=date,
+                                            presenter=presenter, chair=chair)
+
+    def add_past_presentation(self, date=None, presenter=None, chair=None, title='',
+                              presentation=None):
+        """ Adds presentation to past presentation
+
+        Parameters
+        ----------
+        date : {None, datetime.date}
+        presenter : {None, Person, str}
+        chair : {None, Person, str}
+        title : {'', str}
+        presentation : {None, Presentation}
+
+        Raises
+        ------
+        AssertionError
+            If both presentation and the parameters (date, presenter, chair or
+            title) are given
+            If date of presentation is in the future
+        """
+        assert ((date is not None or presenter is not None or chair is not None or
+                title != '') != (presentation is not None)), 'Both the presentation and the\
+                parameters (date, presenter, chair, or title) are given'
+        if isinstance(presenter, str):
+            presenter = self.find_person(presenter)
+        if isinstance(chair, str):
+            chair = self.find_person(chair)
+        if date is not None:
+            presentation = Presentation(date, presenter, chair, title)
+        assert presentation.date < datetime.date.today(), 'The presentation\
+        takes place in the future'
+        self._past_presentations.add_presentation(presentation)
+
+    def get_weights(self, date, weight_type='presenter'):
+        """ Assigns weights for the weighed probability distribution
+
+        Parameters
+        ----------
+        date : datetime.date
+        weight_type : {'presenter', 'chair'}
+            'presentation' gives weights for the presenter
+            'chair' gives weights for the chair
+
+        Returns
+        -------
+        weights
+            weights for each person
+
+        Raises
+        ------
+        AssertionError
+            If weight_type is not 'presenter' or 'chair'
+        """
+        assert weight_type in ['presenter', 'chair'], 'Given weight_type is not\
+        supported'
         weeks_since = []
         for person in self._presenters:
-            if (not person.is_away(date) and
-                person.position != 'undergrad'):
+            if (not person.is_away(date) and 
+                person.position not in ['undergrad', 'visiting']):
                 # find closest date from past
-                if len(person.dates_presented) > 0 and weight_type == 'presentation':
-                    closest_date = abs(date-max(person.dates_presented))
+                if len(person.dates_presented) > 0 and weight_type == 'presenter':
+                    closest_date = abs(date - max(person.dates_presented))
                 elif len(person.dates_chaired) > 0 and weight_type == 'chair':
-                    closest_date = abs(date-max(person.dates_chaired))
+                    closest_date = abs(date - max(person.dates_chaired))
                 else:
                     start_date = datetime.date(2015,2,4)
-                    closest_date = abs(date-start_date)
+                    closest_date = abs(date - start_date)
                 # find closest date from future and past
-                if len(person.dates_to_present) > 0 and weight_type == 'presentation':
+                if len(person.dates_to_present) > 0 and weight_type == 'presenter':
                     closest_date = min(closest_date, min(abs(date-i) for i in person.dates_to_present))
                 elif len(person.dates_to_chair) > 0 and weight_type == 'chair':
                     closest_date = min(closest_date, min(abs(date-i) for i in person.dates_to_chair))
                 weeks_since.append(closest_date.days/7.)
             else:
-                weeks_since.append(0)
-        weights = [i if i>3 else 0 for i in weeks_since]
+                weeks_since.append(0.)
+        weights = [i if i>3 else 0. for i in weeks_since]
         return weights
 
-    def add_future_random_one(self, date, date_type='both'):
-        """ randomly set one person to date
+    def add_future_random_one(self, date, job_type='both'):
+        """ Randomly select a person on date to present and/or chair
 
-        Args:
-            date: instance of datetime
-            date_type: one of ['both', 'presentation', 'chair']
+        Parameters
+        ----------
+        date : datetime.date
+        job_type : {'both', 'presenter', 'chair'}
         """
         # weights for presentation
-        if date_type == 'both':
-            self.add_future_random_one(date, date_type='presentation')
-            self.add_future_random_one(date, date_type='chair')
+        if job_type == 'both':
+            self.add_future_random_one(date, job_type='presenter')
+            self.add_future_random_one(date, job_type='chair')
             return None
-        elif date_type == 'presentation':
-            weights = self.get_weights(date, weight_type='presentation')
-        elif date_type == 'chair':
+        elif job_type == 'presenter':
+            weights = self.get_weights(date, weight_type='presenter')
+        elif job_type == 'chair':
             weights = self.get_weights(date, weight_type='chair')
         probs = [weight*random.random() for weight in weights]
         probs = [prob/sum(probs) for prob in probs]
-        # TODO: check if probs add up to 1
         person = max(zip(self._presenters, probs), key=lambda x:x[1])[0]
-        if date_type=='presentation':
-            if date in self._future_presentations:
+        if job_type=='presenter':
+            matches = self._future_presentations.find_presentations(date=date)
+            if len(matches) != 0:
                 # if person is already chairing on this date
-                if person.name == self._future_presentations[date]['chair']:
+                if len([i for i in matches if i.chair==person]) != 0:
                     # try again
-                    self.add_future_random_one(date, date_type=date_type)
+                    self.add_future_random_one(date, job_type=job_type)
                     return None  # kill recursion here
-                if self._future_presentations[date]['presenter'] != '':
-                    old_presenter = self._future_presentations[date]['presenter']
-                    self.find_person(old_presenter).remove_date_to_present(date)
-                self._future_presentations[date]['presenter'] = person.name
+                self.add_presenter(person, date=date)
             else:
-                self._future_presentations[date] = {'presenter':person.name, 'title':'', 'file':'', 'chair':''}
-        elif date_type=='chair':
-            if date in self._future_presentations:
+                self.add_future_one(date, presenter=person)
+        elif job_type=='chair':
+            matches = self._future_presentations.find_presentations(date=date)
+            if len(matches) != 0:
                 # if person is already presenting on this date
-                if person.name == self._future_presentations[date]['presenter']:
+                if len([i for i in matches if i.presenter==person]) != 0:
                     # try again
-                    self.add_future_random_one(date, date_type=date_type)
+                    self.add_future_random_one(date, job_type=job_type)
                     return None  # kill recursion here
-                if self._future_presentations[date]['chair'] != '':
-                    old_chair = self._future_presentations[date]['chair']
-                    self.find_person(old_chair).remove_date_to_chair(date)
-                self._future_presentations[date]['chair'] = person.name
+                self.add_chair(person, date=date)
             else:
-                self._future_presentations[date] = {'presenter':'', 'title':'', 'file':'', 'chair':person.name}
-        if date_type == 'presentation':
-            person.add_date_to_present(date)
-        elif date_type == 'chair':
-            person.add_date_to_chair(date)
+                new_presentation = Presentation(date, chair=person)
+                self.add_future_one(date, chair=person)
 
-    def add_future_one(self, date, name_presenter='', title='', fileinp='', name_chair=''):
-        """manually set one person to a date
+    def add_future_one(self, date, presenter=None, chair=None, title=''):
+        """ Manually select a person to persent/chair
 
-        Args:
-            date: instance of datetime
-            name_presenter: str of presenter's name
-            title: str
-            fileinp: str
-            name_chair: str for chair's name
+        Parameters
+        ----------
+        date : datetime.date
+        presenter : {None, Person, str}
+        chair: {None, Person, str}
+        title: {'', str}
+
+        Raise
+        -----
+        AssertionError
+            If presenter is not in the list of presenters
+            If chair is not in the list of presenters
         """
-        assert name_presenter == '' or name_presenter in self.presenters
-        assert name_chair == '' or name_chair in self.presenters
-        if date not in self._future_presentations:
-            self._future_presentations[date] = {'presenter':name_presenter, 'title':title, 'file':fileinp, 'chair':name_chair}
-        else:
-            if name_presenter!='':
-                old_presenter = self._future_presentations[date]['presenter']
-                self.find_person(old_presenter).remove_date_to_present(date)
-                self._future_presentations[date]['presenter'] = name_presenter
-            if title!='':
-                self._future_presentations[date]['title'] = title
-            if fileinp!='':
-                self._future_presentations[date]['file'] = fileinp
-            if name_chair!='':
-                old_chair = self._future_presentations[date]['chair']
-                self.find_person(old_chair).remove_date_to_present(date)
-                self._future_presentations[date]['chair'] = name_chair
-        if name_presenter != '':
-            self.find_person(name_presenter).add_date_to_present(date)
-        if name_chair != '':
-            self.find_person(name_chair).add_date_to_chair(date)
+        if isinstance(presenter, str):
+            presenter = self.find_person(presenter)
+        if isinstance(chair, str):
+            chair = self.find_person(chair)
+        assert presenter is None or presenter.name in self.presenters
+        assert chair is None or chair.name in self.presenters
+        matches = self._future_presentations.find_presentations(date=date)
+        new_presentation = Presentation(date=date, presenter=presenter,\
+                                        chair=chair, title=title)
+        self._future_presentations.add_presentation(new_presentation)
 
-    def add_future_random(self, n, refdate):
-        """randomly assigns people to n-1 one week intervals from refdate, including refdate
+    def add_future_random(self, n, from_date):
+        """ Randomly select people to present and chair for some number of weeks
+        from some date
 
-        Args:
-            n: int (positive)
-            refdate: instance of dattime
+        Parameters
+        ----------
+        n : int
+        from_date : datetime.date
         """
         for i in range(n):
-            date = refdate + datetime.timedelta(days=7*i)
+            date = from_date + datetime.timedelta(days=7*i)
             self.add_future_random_one(date)
 
-    def update_future(self):
-        today = datetime.date.today()
-        dates_past = []
-        for date in self._future_presentations:
-            if date < today:
-                presentation = self._future_presentations[date]
-                name_presenter = presentation['presenter']
-                name_chair = presentation['chair']
-                self.add_past_presentation(date, name_presenter, title=presentation['title'], fileinp=presentation['file'], chair=presentation['chair'])
-                if name_presenter != '':
-                    self.find_person(name_presenter).update_date_to_present_to_presented(date)
-                if name_chair != '':
-                    self.find_person(name_chair).update_date_to_chair_to_chaired(date)
-                dates_past.append(date)
-        for date in dates_past:
-            self.remove_future(date)
+    def remove_presentation(self, date=None, presenter=None, chair=None, title=''):
+        """ Removes a presentation that has the given properties
 
-    def remove_future(self, date):
-        if date in self._future_presentations:
-            presenter_name = self._future_presentations[date]['presenter']
-            self.find_person(presenter_name).remove_date_to_present(date)
-            chair_name = self._future_presentations[date]['chair']
-            self.find_person(chair_name).remove_date_to_chair(date)
-            del self._future_presentations[date]
+        Parameters
+        ----------
+        date : {None, datetime.date}
+        presenter : {None, Person, str}
+        chair : {None, Person, str}
+        title : {'', str}
+
+        Raises
+        ------
+        AssertionError
+            If there are more than one presentation that matches the given
+            parameters
+        """
+        if isinstance(presenter, str):
+            presenter = self.find_person(presenter)
+        if isinstance(chair, str):
+            chair = self.find_person(chair)
+        matches_past = self._past_presentations.find_presentations(date=date,
+                                                                   presenter=presenter,
+                                                                   chair=chair,
+                                                                   title=title)
+        matches_future = self._future_presentations.find_presentations(date=date,
+                                                                       presenter=presenter,
+                                                                       chair=chair,
+                                                                       title=title)
+        assert len(matches_past)+len(matches_future)<=1, 'Too many\
+        presentations to assign'
+        for presentation in matches_past:
+            self._past_presentations.remove_presentation(presentation)
+        for presentation in matches_future:
+            self._future_presentations.remove_presentation(presentation)
+
+    def update_future(self):
+        """ Moves the presentations from future presentations to past
+        presentations if the current date is past the dates of the future
+        presentations
+        """
+        today = datetime.date.today()
+        for presentation in self._future_presentations.presentations:
+            date = presentation.date
+            if date < today:
+                self._future_presentations.remove_presentation(presentation)
+                self._past_presentations.add_presentation(presentation)
 
     def compose_emails(self):
-        """writes emails in gmail format (for gmail delay send) to various people
+        """ Writes emails in gmail format (for gmail delay send) to people involved
+        in the presentation
+
+        1 week and 3 days before the presentation, the presenter, the chair, David,
+        Marco, Ahmed, Yilin, and Pawel are notified
+        1 day before the presentation, Ayers lab is notified
 
         """
         with open('email.txt','w') as f:
@@ -340,31 +515,37 @@ class GroupMeetings:
                     title = presentation['title']
                     if title == '':
                         title = 'N/A'
-                    emails = [self.find_person(i).email for i in ['David Kim', 'Cristina Gonzalez', 'Ramon Miranda']]
-                    emails += [self.find_person(i).email for i in [presentation[j] for j in ['presenter','chair']]]
+                    emails = [self.find_person(name).email for name in
+                              ['David Kim', 'Marco Franco', 'Ahmed Kamel']]
+                    emails += [self.find_person(name).email for name in
+                               [presentation[j] for j in ['presenter','chair']]]
                     if numdays in [3,1]:
                         emails.append('ayers-lab@googlegroups.com')
-                    f.write('Group Presentation: '+presentation['presenter'].split()[0]+'\n')
                     f.write(', '.join(emails)+'\n')
-                    f.write('@GDS!:'+str(date)+'\n')
-                    f.write('This is an automatic reminder that there is a group meeting on {date} where:\n    Presenter: {presenter}\n    Title: {title}\n    Chair: {chair}\n'.format(\
-                            presenter=presentation['presenter'], chair=presentation['chair'], date=presentation['date'], title=title))
-                    if presentation['title'] == '' or presentation['file'] == '':
+                    f.write('Group Presentations: {0}\n'.\
+                            format(presentation['presenter'].split()[0]))
+                    f.write('@GDS!:{0}\n'.format(date))
+                    f.write('This is an automatic reminder that there is a group\
+                    meeting on {date} where:\n    Presenter: {presenter}\n    \
+                    Title: {title}\n    Chair: {chair}\n'.\
+                            format(date=presentation['date'],
+                                   presenter=presentation['presenter'],
+                                   chair=presentation['chair'],
+                                   title=title))
+                    if presentation['title'] == '':
                         f.write('When you can, could the presenter send David')
                         if presentation['title'] == '':
-                            f.write(' and Pawel the title of the presentation')
-                            if presentation['file'] == '':
-                                f.write(' and')
-                            else:
-                                f.write('?\n')
-                        if presentation['file'] == '':
-                            f.write(' a copy of the presentation?\n')
-                    f.write('\nThanks,\nDavid\n\n')
+                            f.write(' and Pawel the title of the presentation and')
+                        f.write(' a copy of the presentation?\n')
+                    f.write('\nThanks,\nDavid\n')
 
     def store_people(self):
+        """ Backs up the presenters
+
+        """
         import pickle
         for person in self._presenters:
             name = person.name
             filename = '_'.join(name.lower().split())+'.p'
-            pickle.dump(person,open('./people/'+filename,'w'))
+            pickle.dump(person,open('./backup/'+filename,'w'))
 

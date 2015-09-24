@@ -2,24 +2,39 @@ import datetime
 
 class Person:
     """
-    Attributes:
-        _name: str that describes the person's identity
-        _position: str that describes the person's status within group (choose b/w 'undergrad', 'masters', 'phd', 'postdoc', 'professor')
-        _dates_presented: list of datetime.date instances that describe when said person presented
-        _dates_to_present: list of datetime.date instances that describe when said person will present in the future
-        _dates_chaired: list of datetime.date instances that describe when said person chaired
-        _dates_to_chair: list of datetime.date instances that describe when said person will chair in the future
-        _dates_away: list of tuples that describe when (from and (optional)to) the person is away
+    Attributes
+    ----------
+    _name : str
+        Person's identity
+    _position : {'undergrad', 'masters', 'phd', 'postdoc', 'professor', 'visiting'}
+        Person's status within group
+    _dates_presented : list of datetime.date instances
+        Dates on which the person presented
+    _dates_chaired : list of datetime.date instances
+        Dates on which the person chaired
+    _dates_away : list of tuples of datetime.date instance
+        Start and ends dates between which the person is away
+        If only the start date is given, then the end date is indefinite
+    _email : {'', str}
+        Email of the person
     """
-    def __init__(self, name, position, dates_presented=[], dates_chaired=[], dates_away=[]):
-        """creates person
+    def __init__(self, name, position, dates_presented=[], dates_chaired=[], dates_away=[],
+                 email=''):
+        """ Creates person
 
-        Args:
-            name: str that describes the person's identity
-            position: str that describes the person's status within group (choose b/w 'undergrad', 'masters', 'phd', 'postdoc', 'professor')
-            dates_presented: list of datetime.date instances that describe when said person presented
-            dates_chaired: list of datetime.date instances that describe when said person chaired
-            dates_away: list of tuples that describe when (from and (optional)to) the person is away
+        Parameters
+        ----------
+        name : str
+            Person's identity
+        position : {'undergrad', 'masters', 'phd', 'postdoc', 'professor', 'visiting'}
+            Person status in the group
+        _dates_presented : list of datetime.date instances
+            Dates on which the person presented
+        _dates_chaired : list of datetime.date instances
+            Dates on which the person chaired
+        _dates_away : list of tuples of datetime.date instance
+            Start and ends dates between which the person is away
+            If only the start date is given, then the end date is indefinite
         """
         self._name = name
         self._position = position
@@ -28,26 +43,70 @@ class Person:
         self._dates_chaired = dates_chaired
         self._dates_to_chair = []
         self._dates_away = dates_away
-        self._email = ''
+        self._email = email
 
     def __eq__(self, other):
-        """ returns true if other is the name of person else false
+        """ Compares self to other
 
-        Args:
-            other: str indicating persons name
+        Parameters
+        ----------
+        other : {Person, str}
+            If str, then it is the name of the person
+
+        Returns
+        -------
+        yes_or_no : {True, False}
+            True if they are the same
+            False if they are not the same
         """
-
-        if self.name == other:
+        if isinstance(other, str) and self.name == other:
             return True
+        elif isinstance(other, Person):
+            for attribute, value in self.__dict__.items():
+                if getattr(other, attribute) != value:
+                    return False
+            else:
+                return True
         else:
             return False
+
+    def __ne__(self, other):
+        """ Compares self to other
+
+        Parameters
+        ----------
+        other : {Person, str}
+            If str, then it is the name of the person
+
+        Returns
+        -------
+        yes_or_no : {True, False}
+            True if they are not the same
+            False if they are the same
+        """
+        if isinstance(other, str) and self.name == other:
+            return False
+        elif isinstance(other, Person):
+            for attribute, value in self.__dict__.items():
+                if getattr(other, attribute) != value:
+                    return True
+            else:
+                return False
+        else:
+            return True
 
     @property
     def name(self):
         return self._name
+
     @property
     def position(self):
         return self._position
+
+    @position.setter
+    def position(self, value):
+        self._position = value
+
     @property
     def dates_presented(self):
         return self._dates_presented
@@ -60,9 +119,19 @@ class Person:
     @property
     def dates_to_chair(self):
         return self._dates_to_chair
+
     @property
     def email(self):
         return self._email
+    @email.setter
+    def email(self, email):
+        """adds email to person
+
+        Args:
+            email: str of person's email
+        """
+        self._email = email
+
     @property
     def dates_away(self):
         return self._dates_away
@@ -227,10 +296,3 @@ class Person:
             self.remove_date_to_chair(date)
             self.add_date_chaired(date)
 
-    def add_email(self, email):
-        """adds email to person
-
-        Args:
-            email: str of person's email
-        """
-        self._email = email
