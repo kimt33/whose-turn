@@ -124,7 +124,7 @@ class GroupMeetings(object):
         for date in person.dates_presented:
             self.add_past_presentation(date=date, presenter=person)
         for date in person.dates_to_present:
-            self.add_future_presentation(date=date, presenter=person)
+            self.add_future_one(date, presenter=person)
         for date in person.dates_chaired:
             self.add_chair(date, person)
         for date in person.dates_to_chair:
@@ -321,6 +321,10 @@ class GroupMeetings(object):
             presentation = Presentation(date, presenter, chair, title)
         assert presentation.date < datetime.date.today(), 'The presentation\
         takes place in the future'
+        if presentation._presenter is not None:
+            presentation._presenter.add_date_presented(presentation.date)
+        if presentation._chair is not None:
+            presentation._chair.add_date_chaired(presentation.date)
         self._past_presentations.add_presentation(presentation)
 
     def get_weights(self, date, weight_type='presenter'):
@@ -348,21 +352,17 @@ class GroupMeetings(object):
         weeks_since = []
         for person in self._presenters:
             if (not person.is_away(date) and 
-                person.position not in ['undergrad', 'visiting']):
-                # find closest date from past
-                if len(person.dates_presented) > 0 and weight_type == 'presenter':
-                    closest_date = abs(date - max(person.dates_presented))
-                elif len(person.dates_chaired) > 0 and weight_type == 'chair':
-                    closest_date = abs(date - max(person.dates_chaired))
-                else:
-                    start_date = datetime.date(2015,2,4)
-                    closest_date = abs(date - start_date)
-                # find closest date from future and past
-                if len(person.dates_to_present) > 0 and weight_type == 'presenter':
-                    closest_date = min(closest_date, min(abs(date-i) for i in person.dates_to_present))
-                elif len(person.dates_to_chair) > 0 and weight_type == 'chair':
-                    closest_date = min(closest_date, min(abs(date-i) for i in person.dates_to_chair))
-                weeks_since.append(closest_date.days/7.)
+                person.position not in ['undergrad', 'visiting', 'professor']):
+                if weight_type == 'presenter':
+                    dates_past = person.dates_presented +\
+                                 [i for i in person.dates_to_present if i<date]
+                elif weight_type == 'chair':
+                    dates_past = person.dates_chaired +\
+                                 [i for i in person.dates_to_chair if i<date]
+                num_weeks = datetime.timedelta(days=15)
+                if len(dates_past) != 0:
+                    num_weeks = min((date-dates_past[-1])/7, num_weeks)
+                weeks_since.append(num_weeks.days)
             else:
                 weeks_since.append(0.)
         weights = [i if i>3 else 0. for i in weeks_since]
@@ -409,7 +409,6 @@ class GroupMeetings(object):
                     return None  # kill recursion here
                 self.add_chair(person, date=date)
             else:
-                new_presentation = Presentation(date, chair=person)
                 self.add_future_one(date, chair=person)
 
     def add_future_one(self, date, presenter=None, chair=None, title=''):
@@ -435,9 +434,21 @@ class GroupMeetings(object):
         assert presenter is None or presenter.name in self.presenters
         assert chair is None or chair.name in self.presenters
         matches = self._future_presentations.find_presentations(date=date)
-        new_presentation = Presentation(date=date, presenter=presenter,\
-                                        chair=chair, title=title)
-        self._future_presentations.add_presentation(new_presentation)
+        if len(matches) == 0:
+            new_presentation = Presentation(date=date, presenter=presenter,\
+                                            chair=chair, title=title)
+            if presenter is not None:
+                presenter.add_date_to_present(date)
+            if chair is not None:
+                chair.add_date_to_chair(date)
+            self._future_presentations.add_presentation(new_presentation)
+        else:
+            if isinstance(presenter, Person):
+                self.add_presenter(presenter, date=date)
+            if isinstance(chair, Person):
+                self.add_chair(chair, date=date)
+            if title != '':
+                self.add_title(title, date=date)
 
     def add_future_random(self, n, from_date):
         """ Randomly select people to present and chair for some number of weeks

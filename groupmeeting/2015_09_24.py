@@ -1,5 +1,6 @@
 from group_meeting import GroupMeetings
 from person import Person
+from presentation import Presentation
 import pickle
 import os
 from datetime import date
@@ -49,12 +50,16 @@ gm.add_title('Outline of the Projects in Ayers Group', date=date(2015,9,9))
 gm.remove_presentation(date=date(2015,9,16), chair='David Kim')
 gm.add_title('Energy extrapolation: finding a systematic way to correct model energies', date=date(2015,9,16))
 gm.add_title('Polarizability Fitting and Calculation', date=date(2015,9,22))
-gm.add_future_one(date=date(2015,10,6), presenter='Nicole Dumont')
+# need to hack in a second presentation o nthe same day
+nicole = gm.find_person('Nicole Dumont')
+second_presentation = Presentation(date(2015,10,6), presenter=nicole)
+gm._future_presentations.add_presentation(second_presentation)
 gm.replace_date(date(2015,10,13), from_date=date(2015,9,29), presenter='Kumru Dikmenli')
 gm.remove_presentation(date=date(2015,10,13), presenter='Marco Franco')
 gm.update_future()
 gm.find_person('Paul Ayers').add_date_away((date(2015,9,23),date(2015,10,7)))
-gm.add_future_random_one(date(2015,9,29))
-gm.add_future_random(16, date(2015,10,20))
+gm.find_person('Chunying Rong').add_date_away((date(2015,9,28),))
+gm.find_person('Pawel Tecmer').add_date_away((date(2015,9,1), date(2015,9,20)))
+gm.find_person('Cristina Gonzalez').add_date_away((date(2015,10,10), date(2015,10,18)))
+gm.add_future_random(14, date(2015,10,27))
 gm.print_nice()
-
