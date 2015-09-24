@@ -24,12 +24,12 @@ sS'_dates_to_chair'
 p12
 (lp13
 g6
-(S'\x07\xdf\x0b\x03'
+(S'\x07\xdf\n\x1b'
 p14
 tp15
 Rp16
 ag6
-(S'\x07\xe0\x01\x1a'
+(S'\x07\xe0\x01\x05'
 p17
 tp18
 Rp19
@@ -40,7 +40,7 @@ sS'_dates_to_present'
 p22
 (lp23
 g6
-(S'\x07\xdf\x0b\x18'
+(S'\x07\xdf\x0c\x01'
 p24
 tp25
 Rp26

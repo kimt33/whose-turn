@@ -2,9 +2,10 @@
 Person
 p0
 (dp1
-S'_dates_to_chair'
+S'_email'
 p2
-(lp3
+S''
+p3
 sS'_dates_presented'
 p4
 (lp5
@@ -19,10 +20,9 @@ asS'_name'
 p10
 S'Ali Snow'
 p11
-sS'_email'
+sS'_dates_to_chair'
 p12
-S''
-p13
+(lp13
 sS'_dates_chaired'
 p14
 (lp15

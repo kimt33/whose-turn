@@ -19,12 +19,12 @@ p8
 cdatetime
 date
 p10
-(S'\x07\xdf\n\x1b'
+(S'\x07\xdf\x0b\x18'
 p11
 tp12
 Rp13
 ag10
-(S'\x07\xe0\x01\x05'
+(S'\x07\xe0\x01\x1a'
 p14
 tp15
 Rp16
@@ -45,7 +45,7 @@ p24
 tp25
 Rp26
 ag10
-(S'\x07\xe0\x01\x13'
+(S'\x07\xdf\x0c\x16'
 p27
 tp28
 Rp29
