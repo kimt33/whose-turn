@@ -63,3 +63,8 @@ gm.find_person('Pawel Tecmer').add_date_away((date(2015,9,1), date(2015,9,20)))
 gm.find_person('Cristina Gonzalez').add_date_away((date(2015,10,10), date(2015,10,18)))
 gm.add_future_random(14, date(2015,10,27))
 gm.print_nice()
+gm.store_people()
+
+import pickle
+pickle.dump(gm, open('current_status.p','w'))
+pickle.dump(gm, open('history/2015_09_24.p','w'))
